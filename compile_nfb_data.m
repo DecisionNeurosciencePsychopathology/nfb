@@ -1,0 +1,100 @@
+function out=compile_nfb_data()
+%Funciton will organize and create simple plots of nfb task data. For more
+%information see README at https://github.com/heffjos/nfb.
+
+%% Datalocation -- set as needed
+data_path = 'E:\Box Sync\fMRI_Shared\NFB_response\'; %Change as needed
+
+%Grab dir list from datalocation
+expression = '.*\d{3,9}.*';
+data_dirs = regexp(glob([data_path '/SON*']), expression, 'match'); %Think of a way to just get the uniue ids here , probably with cellfun
+data_dirs = [data_dirs{:}];
+
+%% Initialize storgae variables
+out.SON1 = struct;
+out.SON2 = struct;
+out.SON1_MDF_1 = [];
+out.SON1_MDF_2 = [];
+out.SON2_MDF_1 = [];
+out.SON2_MDF_2 = [];
+
+%% Compile loop
+for data_dir = data_dirs
+    %Put everything into one table
+    out=compile_single_subject_data(out,data_dir);
+end
+
+%% Save final output
+save([data_path '/nfball'],'out')
+
+
+function out=compile_single_subject_data(out,data_dir)
+%Function will go though each directory in the predefined data location 
+%and compile single subjects into one csv, then using the single subject
+%csvs, compile a group level csv for each task (SON1-2) & administration
+%(baseline (1) vs 8 weeks later (2))
+
+%Get the subj id
+expression = '\d{3,9}';
+id=regexp(data_dir,expression,'match');
+id=id{:};
+
+%Get the administration code from the tail of the dir
+expression = '_(\d)\\$';
+admin_code=regexp(data_dir,expression); %Not sure why the grouping didn't work...
+admin_code=data_dir{:}(admin_code{:}+1);
+
+%Get the csv files in the directory (they should start with SON1 or SON2)
+expression = '(?!.*[\\])SON.*Run.*csv';
+files=regexp(glob([data_dir{:} '*csv']),expression,'match');
+files=[files{:}]; %May have to sort these if it doesn't do it automatically
+
+%Initialize table var
+T=[];
+
+%File loop
+for file = files
+    T=[T; readtable([data_dir{:} file{:}])];
+end
+
+%Decide which struct to use & write the data to the subj lvl table
+if strfind(data_dir{:},'SON1')
+    out.SON1.(['subj' id{:}]).(['admin' admin_code]) = T;
+    str = 'SON1_MDF_';
+elseif strfind(data_dir{:},'SON2')
+    out.SON2.(['subj' id{:}]).(['admin' admin_code]) = T;
+    str = 'SON2_MDF_';
+else
+    error('Something went wrong')
+end
+
+%Update master list
+try
+    out.([str admin_code]) = [out.([str admin_code]); T];
+catch
+    %In case the columns don't match up replace missing vars with nans, I
+    %don't think this should overwrite any columns but be careful here
+    T_colmissing = setdiff(out.([str admin_code]).Properties.VariableNames, T.Properties.VariableNames);
+    out_colmissing = setdiff(T.Properties.VariableNames, out.([str admin_code]).Properties.VariableNames);
+    T = [T array2table(nan(height(T), numel(T_colmissing)), 'VariableNames', T_colmissing)];
+    out.([str admin_code]) = [out.([str admin_code]) array2table(nan(height(out.([str admin_code])), numel(out_colmissing)), 'VariableNames', out_colmissing)];
+    
+    %If the data doesn't want to merge becasue if data type
+    for colname = T_colmissing
+        if iscell(out.([str admin_code]).(colname{1}))
+            T.(colname{1}) = cell(height(T), 1);
+        end
+    end
+    for colname = out_colmissing
+        if iscell(T.(colname{1}))
+            out.([str admin_code]).(colname{1}) = cell(height(out.([str admin_code])), 1);
+        end
+    end
+    
+    %Now update
+    out.([str admin_code]) = [out.([str admin_code]); T];
+end
+
+
+%Save new file in data location
+writetable(T,[data_dir{:} sprintf('subj_%s_all_runs.csv',id{:})])
