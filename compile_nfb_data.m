@@ -3,25 +3,40 @@ function out=compile_nfb_data()
 %information see README at https://github.com/heffjos/nfb.
 
 %% Datalocation -- set as needed
-data_path = 'E:\Box Sync\fMRI_Shared\NFB_response\'; %Change as needed
-
-%Grab dir list from datalocation
-expression = '.*\d{3,9}.*';
-data_dirs = regexp(glob([data_path '/SON*']), expression, 'match'); %Think of a way to just get the uniue ids here , probably with cellfun
-data_dirs = [data_dirs{:}];
+if ispc
+    data_path = 'E:\Box Sync\fMRI_Shared\NFB_response\'; %Change as needed
+else
+    data_path = 'Add marta''s path then push';
+end
 
 %% Initialize storgae variables
 out.SON1 = struct;
 out.SON2 = struct;
 out.SON1_MDF_1 = [];
 out.SON1_MDF_2 = [];
-out.SON2_MDF_1 = [];
-out.SON2_MDF_2 = [];
+out.SON2_MDF_Nalt = [];
+out.SON2_MDF_Plac = [];
 
 %% Compile loop
-for data_dir = data_dirs
-    %Put everything into one table
-    out=compile_single_subject_data(out,data_dir);
+
+%Grab parent directories
+experiment_paths=glob([data_path 'SON*'])';
+
+for experiment_path = experiment_paths
+    
+    if strfind(experiment_path{:},'SONRISA1')
+        experiment_path = {[experiment_path{:} 'CorrectResponse']};
+    end
+    
+    %Grab dir list from datalocation
+    expression = '.*\d{3,9}.*';
+    data_dirs = regexp(glob([experiment_path{:} '/SON*']), expression, 'match'); %Think of a way to just get the uniue ids here , probably with cellfun
+    data_dirs = [data_dirs{:}];
+    
+    for data_dir = data_dirs
+        %Put everything into one table
+        out=compile_single_subject_data(out,data_dir);
+    end
 end
 
 %% Save final output
@@ -29,7 +44,7 @@ save([data_path '/nfball'],'out')
 
 
 function out=compile_single_subject_data(out,data_dir)
-%Function will go though each directory in the predefined data location 
+%Function will go though each directory in the predefined data location
 %and compile single subjects into one csv, then using the single subject
 %csvs, compile a group level csv for each task (SON1-2) & administration
 %(baseline (1) vs 8 weeks later (2))
@@ -39,13 +54,21 @@ expression = '\d{3,9}';
 id=regexp(data_dir,expression,'match');
 id=id{:};
 
-%Get the administration code from the tail of the dir
-expression = '_(\d)\\$';
+%Get the administration code from the tail of the dir - Null is SON2
+expression = '_(\d)\\|\/$';
 admin_code=regexp(data_dir,expression); %Not sure why the grouping didn't work...
 admin_code=data_dir{:}(admin_code{:}+1);
 
+%For SON-2 designate the type of run (Nalt or Plac)
+expression = '([A-Za-z]{4})(?:[\\|\/])?$';
+run_str=regexp(data_dir,expression,'tokens'); 
+%Change into a function later
+while iscell(run_str) && ~isempty(run_str)
+    run_str=run_str{:};
+end 
+
 %Get the csv files in the directory (they should start with SON1 or SON2)
-expression = '(?!.*[\\])SON.*Run.*csv';
+expression = '(?!.*[\\|\/])SON.*Run.*csv';
 files=regexp(glob([data_dir{:} '*csv']),expression,'match');
 files=[files{:}]; %May have to sort these if it doesn't do it automatically
 
@@ -62,6 +85,7 @@ if strfind(data_dir{:},'SON1')
     out.SON1.(['subj' id{:}]).(['admin' admin_code]) = T;
     str = 'SON1_MDF_';
 elseif strfind(data_dir{:},'SON2')
+    admin_code = run_str; %Override admin code
     out.SON2.(['subj' id{:}]).(['admin' admin_code]) = T;
     str = 'SON2_MDF_';
 else
