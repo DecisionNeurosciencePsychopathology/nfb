@@ -6,7 +6,7 @@ close all
 
 %Load in main data structure  (out)
 %load('/Users/martapecina/Google Drive/fMRI_Responses/NFB_response/nfball.mat')
-load('E:\Users\wilsonj3\Google Drive\NFB_response\nfball.mat')
+load('E:\Box Sync\fMRI_shared\NFB_response\nfball.mat')
 
 protocols = {'SON1', 'SON2'};
 fig_ct=1;

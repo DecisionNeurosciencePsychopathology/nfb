@@ -72,12 +72,38 @@ expression = '(?!.*[\\|\/])SON.*Run.*csv';
 files=regexp(glob([data_dir{:} '*csv']),expression,'match');
 files=[files{:}]; %May have to sort these if it doesn't do it automatically
 
+%Check if all runs are present if not create missing data run files
+% if length(files)~=4
+%     files=file_checker(data_dir{:},files);
+% end
+
 %Initialize table var
 T=[];
 
 %File loop
 for file = files
     T=[T; readtable([data_dir{:} file{:}])];
+end
+
+%Fill any missing runs with nans for completion purposes
+if length(files)~=4
+    %We are assuming 4 runs here
+    runs=1:4;
+    missing_runs = runs(~ismember(runs,unique(T.Run))); %Which missing runs
+    vars=T.Properties.VariableNames(10:end); %Keep some vars
+    for missing_run=missing_runs
+        tmp_T=readtable([data_dir{:} file{:}]);
+        tmp_T.Run=ones(length(tmp_T.Run),1).*missing_run;
+        for var=vars
+            if iscell(tmp_T.(var{:}))
+                tmp_T.(var{:})=repmat({'Nan'},length(tmp_T.Run),1);
+            else
+                tmp_T.(var{:})=nan(length(tmp_T.Run),1);
+            end
+        end
+        %update the main subject table
+        T=[T; tmp_T];
+    end
 end
 
 %Decide which struct to use & write the data to the subj lvl table
@@ -122,3 +148,10 @@ end
 
 %Save new file in data location
 writetable(T,[data_dir{:} sprintf('subj_%s_all_runs.csv',id{:})])
+
+
+
+function foo=file_checker(data_dir,files)
+
+
+
