@@ -2,7 +2,7 @@ function run_nfb_vba
 %Parent script to run subjects through VBA data analysis scripts
 
 %% Load in main data structure
-load('E:\Users\wilsonj3\Google Drive\NFB_response\nfball.mat') %Called out
+load('E:\Box Sync\fMRI_shared\NFB_response\nfball.mat') %Called out
 
 %Rename nfball to reduce confusion from VBA output, clear original out 
 nfball=out;

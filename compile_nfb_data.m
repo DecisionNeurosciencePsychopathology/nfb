@@ -1,6 +1,9 @@
-function out=compile_nfb_data()
+function out=compile_nfb_data(regressor_flag)
 %Funciton will organize and create simple plots of nfb task data. For more
 %information see README at https://github.com/heffjos/nfb.
+
+%%Create regreossors or not
+try regressor_flag; catch, regressor_flag=0; end
 
 %% Datalocation -- set as needed
 if ispc
@@ -16,6 +19,9 @@ out.SON1_MDF_1 = [];
 out.SON1_MDF_2 = [];
 out.SON2_MDF_Nalt = [];
 out.SON2_MDF_Plac = [];
+
+%%Additional options
+options.rflag=regressor_flag;
 
 %% Compile loop
 
@@ -35,7 +41,7 @@ for experiment_path = experiment_paths
     
     for data_dir = data_dirs
         %Put everything into one table
-        out=compile_single_subject_data(out,data_dir);
+        out=compile_single_subject_data(out,data_dir,options);
     end
 end
 
@@ -43,7 +49,7 @@ end
 save([data_path '/nfball'],'out')
 
 
-function out=compile_single_subject_data(out,data_dir)
+function out=compile_single_subject_data(out,data_dir,options)
 %Function will go though each directory in the predefined data location
 %and compile single subjects into one csv, then using the single subject
 %csvs, compile a group level csv for each task (SON1-2) & administration
@@ -109,14 +115,24 @@ end
 %Decide which struct to use & write the data to the subj lvl table
 if strfind(data_dir{:},'SON1')
     out.SON1.(['subj' id{:}]).(['admin' admin_code]) = T;
+    proto={'SON1'};
+    suffix_codes={'a','b'};
+    reg_suffix = suffix_codes{str2double(admin_code)};
     str = 'SON1_MDF_';
 elseif strfind(data_dir{:},'SON2')
     admin_code = run_str; %Override admin code
     out.SON2.(['subj' id{:}]).(['admin' admin_code]) = T;
+    proto={'SON2'};
+    reg_suffix=run_str;
     str = 'SON2_MDF_';
 else
     error('Something went wrong')
 end
+
+%Parse out the data for easier regressor creation
+%out.(proto{:}).(['subj' id{:}]).(['admin' admin_code '_data'])=parse_single_subj_data(out.(proto{:}).(['subj' id{:}]).(['admin' admin_code]),proto{:},id,reg_suffix);
+tmp_data=parse_single_subj_data(out.(proto{:}).(['subj' id{:}]).(['admin' admin_code]),proto{:},id,reg_suffix);
+out.(proto{:}).(['subj' id{:}]).(['admin' admin_code '_reg_id']) = tmp_data.reg_id;
 
 %Update master list
 try
@@ -149,9 +165,28 @@ end
 %Save new file in data location
 writetable(T,[data_dir{:} sprintf('subj_%s_all_runs.csv',id{:})])
 
+%Create regressors if needed
+if options.rflag
+    write_nfb_regressors(out.(proto{:}).(['subj' id{:}]).(['admin' admin_code]),out.(proto{:}).(['subj' id{:}]).(['admin' admin_code '_reg_id']))
+end
+
 
 
 function foo=file_checker(data_dir,files)
+
+function ss_data=parse_single_subj_data(T,proto,id,suffix_code)
+
+%Grab the column names
+col_names=T.Properties.VariableNames;
+
+%Set subject id name as we need it to look for the afni models Ex:
+%SON1_001_a for subject 001 admin 1
+ss_data.reg_id = sprintf('%s_%s_%s',proto,id{:},suffix_code);
+
+%Parse out the table data into a struct
+% for i=2:length(col_names)
+%     ss_data.(col_names{i})=T.(col_names{i});
+% end
 
 
 

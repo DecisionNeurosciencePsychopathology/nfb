@@ -6,7 +6,10 @@ function [posterior,out]=pavlov_vba_sonsira(input_struct)
 
 
 %To save or not to save results
-save_results=1;
+save_results=0;
+
+%To plot or not
+graphics=1;
 
 %% read in data
 try
@@ -28,44 +31,37 @@ imp=cellfun(@(x) str2double(x),cellfun(@count_subj_response, data.ImprovedRespTe
 
 us = [will_imp'; imp'];
 
+%Set up y -- clean this up 
+ y = [(cellfun(@(x) strcmp(x,'A'), data.Infusion))';
+     (cellfun(@(x) strcmp(x,'B'), data.Infusion))';
+     (cellfun(@(x) strcmp(x,'C'), data.Infusion))';
+     (cellfun(@(x) strcmp(x,'D'), data.Infusion))';];
+ 
+ %Create condition array for update indexing
+ condition = double(y);
+ condition(2,:)=condition(2,:).*2;
+ condition(3,:)=condition(3,:).*3;
+ condition(4,:)=condition(4,:).*4;
+ condition=sum(condition);
+
+ %just for expected ratings for now
+ y = [y(1,:) & will_imp'==1;
+     y(2,:)& will_imp'==1;
+     y(3,:)& will_imp'==1;
+     y(4,:)& will_imp'==1;];
+ 
 %Set up u
 u = [cs 0; ...  % 1 infusion on current trial
     [us [0;0]]; ...  % 2 feedback on current trial
+    condition 0;
     0 cs; ...% 3 infusion on previous trial (leading to the current, pre-update value)
     [[0;0] us]; ... %4 feedback on previous trial
-    ];
-
-%Set up y
-y = zeros(4,length(imp));
-for i = 1:length(imp)
-    %For will improve rating
-    try
-        if will_imp(i)
-            y(1,i)=1;
-        else
-            y(2,i)=1;
-        end
-    catch
-        %In case there is a nan just leave it as 0? Skip the nans?
-    end
-    
-    %For improve rating
-    try
-        if imp(i)
-            y(3,i)=1;
-        else
-            y(4,i)=1;
-        end
-    catch
-        %In case there is a nan just leave it as 0? Skip the nans?
-    end
-end
-
-
-
+    0 condition;
+    ]; 
+ 
 %% define f and g functions
 f_fname = @f_pavlov; % evolution function 
-g_fname=@g_feedback_ratings; %observation function
+g_fname=@g_sigmoid; %observation function
 
 %% Set up options
 options.inF.noCS = 0;
@@ -74,20 +70,15 @@ options.inG.noCS = 0;
 %options.isYout      = zeros(size(y)) ;
 options.isYout=isnan(y) ;
 options.isYout(1) = 1;
-options.inF.binomial_override = 1;
-options.inF.decay = decay;
-options.inG.decay = decay;
-options.inG.biases = biases;
-options.inG.infusion_expectancy = infusion_expectancy;
-options.inF.track_pe = track_pe;
-options.inG.track_pe = track_pe;
+%options.inF.binomial_override = 1;
 
 
 
-dim = struct('n',2,'n_theta',1,'n_phi',2);
+
+dim = struct('n',4,'n_theta',2,'n_phi',1);
 priors.muTheta = zeros(dim.n_theta,1);
 priors.SigmaTheta = 1e1*eye(dim.n_theta);
-priors.muTheta(1) = -1.3801; %% fix LR at .2
+%priors.muTheta(1) = -1.3801; %% fix LR at .2
 
 
 priors.muPhi = zeros(dim.n_phi,1);
