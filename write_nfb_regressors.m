@@ -5,6 +5,18 @@ reg_file_dest = 'C:/kod/nfb/analysis/regs/';
 %% Trial
 write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.J2Onset,sprintf('%s_trial',id),true(length(data.TrialNum),1),0,data);
 
+%% Infusion
+write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset,sprintf('%s_infusion_onset',id),true(length(data.TrialNum),1),0,data);
+
+%% Will Improve Responses
+write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_willImpRT',id),true(length(data.TrialNum),1),0,data);
+
+%% Feedback
+write3Ddeconv_startTimes(reg_file_dest,data.Feed1Onset,data.Feed3Onset,sprintf('%s_feedback_onset',id),true(length(data.TrialNum),1),0,data);
+
+%% Improve Responses
+write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+data.ImprovedRt,sprintf('%s_impRT',id),true(length(data.TrialNum),1),0,data);
+
 
 function [x,y]=write3Ddeconv_startTimes(file_loc,event_beg,event_end,fname,modulator,noFSL,b)
 % Function will write FSL styled regressors in dat files for fMRI analysis
@@ -58,17 +70,23 @@ function c = asterisk(x,b)
 
 c=[];
 ast = {'*', '*', '*'};
-for i = 1:length(b.trial_index)
-    %Set up trial ranges
-    trial_index_1 = b.trial_index(i);
-    trial_index_2 = trial_index_1 + b.trials_per_block-1;
-    block_data = num2cell(x(trial_index_1: trial_index_2,:));
-    if i<length(b.trial_index)
+trial_index=find(b.TrialNum==1);
+
+%Short while loop to place asterisks for regressors
+while ~isempty(trial_index)    
+    if 1<length(trial_index)
+        block_data = num2cell(x(trial_index(1): trial_index(2)-1,:));
         c = [c; block_data; ast];
     else
+        block_data = num2cell(x(trial_index(1): end,:));
         c = [c; block_data;];
     end
+    trial_index(1)=[];
 end
+
+%DO NOTE SON1_008_a has duplicate * * *'s due to missing one block, do we
+%need to account for this? or will afni figure it out?
+
 
 %clean up any nans
 %fh = @(y) all(isnan(y(:)));
