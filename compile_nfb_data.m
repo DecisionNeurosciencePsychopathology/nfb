@@ -7,9 +7,9 @@ try regressor_flag; catch, regressor_flag=0; end
 
 %% Datalocation -- set as needed
 if ispc
-    data_path = 'E:\Box Sync\fMRI_Shared\NFB_response\'; %Change as needed
+    data_path = 'E:\Box Sync\fMRI_Shared\NFB\NFB_response\'; %Change as needed
 else
-    data_path = 'Add marta''s path then push';
+    data_path = '/Users/martapecina/Box Sync/PITT/RESEARCH/fMRI_shared/NFB/NFB_response/';
 end
 
 %% Initialize storgae variables
@@ -63,7 +63,7 @@ id=id{:};
 %Get the administration code from the tail of the dir - Null is SON2
 expression = '_(\d)\\|\/$';
 admin_code=regexp(data_dir,expression); %Not sure why the grouping didn't work...
-admin_code=data_dir{:}(admin_code{:}+1);
+admin_code=data_dir{:}(admin_code{:}-1);
 
 %For SON-2 designate the type of run (Nalt or Plac)
 expression = '([A-Za-z]{4})(?:[\\|\/])?$';
