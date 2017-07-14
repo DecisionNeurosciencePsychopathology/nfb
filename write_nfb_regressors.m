@@ -1,6 +1,12 @@
 function write_nfb_regressors(data,id)
 
-reg_file_dest = '/Users/martapecina/GitHub/nfb_analysis/regs/';
+%% Datalocation -- set as needed
+if ispc
+    reg_file_dest = 'C:/kod/nfb/analysis/regs/'; %Change as needed
+else
+    reg_file_dest = '/Users/martapecina/GitHub/nfb_analysis/regs/';
+end
+
 
 %% Trial
 write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.J2Onset,sprintf('%s_trial',id),true(length(data.TrialNum),1),0,data);

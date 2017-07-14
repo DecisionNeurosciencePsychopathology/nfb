@@ -6,8 +6,11 @@ close all
 
 %Load in main data structure  (out)
 %load('/Users/martapecina/Google Drive/fMRI_Responses/NFB_response/nfball.mat')
-%load('E:\Box Sync\fMRI_shared\NFB_response\nfball.mat')
-load('/Users/martapecina/Box Sync/PITT/RESEARCH/fMRI_shared/NFB/NFB_response/nfball.mat')
+if ispc
+    load('E:/Box Sync/fMRI_shared/NFB/NFB_response/nfball.mat')
+else
+    load('/Users/martapecina/Box Sync/PITT/RESEARCH/fMRI_shared/NFB/NFB_response/nfball.mat')
+end
 protocols = {'SON1', 'SON2'};
 fig_ct=1;
 for protocol = protocols
@@ -18,7 +21,10 @@ for protocol = protocols
     group_specs=compile_group_data(son1_and_2,group_specs);
     fig_ct=plot_group_average_response(son1_and_2,fig_ct,group_specs);
     for subj = subjs
-        admins=fieldnames(out.(protocol{:}).(subj{:}))';
+        %admins=fieldnames(out.(protocol{:}).(subj{:}))';
+        admins_tmp=regexp(fieldnames(out.(protocol{:}).(subj{:}))','\w+[0-9]$|\w+Nalt$|\w+Plac$','match');
+        admins=admins_tmp(~cellfun(@isempty,admins_tmp));
+        admins=(admins{:});
         for admin = admins
             %Pull single subject data
             data=out.(protocol{:}).(subj{:}).(admin{:});
@@ -208,22 +214,22 @@ end
 
 %Merge the structs into one array
 for condition  = conditions
-   tmp_willImp=[];
-   tmp_imp=[];
-   fnames_will=fieldnames(group_specs.willImpResp.(condition{:}))';
-   fnames_imp=fieldnames(group_specs.ImpResp.(condition{:}))';
-   for fname = fnames_will
-       tmp_willImp=[tmp_willImp group_specs.willImpResp.(condition{:}).(fname{:})];
-   end
-   
-   for fname = fnames_imp
-       tmp_imp=[tmp_imp group_specs.ImpResp.(condition{:}).(fname{:})];
-   end
+    tmp_willImp=[];
+    tmp_imp=[];
+    fnames_will=fieldnames(group_specs.willImpResp.(condition{:}))';
+    fnames_imp=fieldnames(group_specs.ImpResp.(condition{:}))';
+    for fname = fnames_will
+        tmp_willImp=[tmp_willImp group_specs.willImpResp.(condition{:}).(fname{:})];
+    end
     
-   %Take the mean
-   group_specs.(['cond_' condition{:} '_willImpMeanResponse']) = nanmean(tmp_willImp,2)';
-   group_specs.(['cond_' condition{:} '_ImpMeanResponse']) = nanmean(tmp_imp,2)';
-   
+    for fname = fnames_imp
+        tmp_imp=[tmp_imp group_specs.ImpResp.(condition{:}).(fname{:})];
+    end
+    
+    %Take the mean
+    group_specs.(['cond_' condition{:} '_willImpMeanResponse']) = nanmean(tmp_willImp,2)';
+    group_specs.(['cond_' condition{:} '_ImpMeanResponse']) = nanmean(tmp_imp,2)';
+    
 end
 
 group_specs.name = 'Son1 admin 1 and 2';

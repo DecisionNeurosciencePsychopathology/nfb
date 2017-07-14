@@ -8,8 +8,12 @@ try regressor_flag; catch, regressor_flag=0; end
 %% Datalocation -- set as needed
 if ispc
     data_path = 'E:\Box Sync\fMRI_Shared\NFB\NFB_response\'; %Change as needed
+    %For the time being because depending on the system we might not have a
+    %'/' in front of the string
+    str_direction=1;
 else
     data_path = '/Users/martapecina/Box Sync/PITT/RESEARCH/fMRI_shared/NFB/NFB_response/';
+    str_direction=-1;
 end
 
 %% Initialize storgae variables
@@ -22,7 +26,7 @@ out.SON2_MDF_Plac = [];
 
 %%Additional options
 options.rflag=regressor_flag;
-
+options.str_direction = str_direction;
 %% Compile loop
 
 %Grab parent directories
@@ -63,7 +67,7 @@ id=id{:};
 %Get the administration code from the tail of the dir - Null is SON2
 expression = '_(\d)\\|\/$';
 admin_code=regexp(data_dir,expression); %Not sure why the grouping didn't work...
-admin_code=data_dir{:}(admin_code{:}-1);
+admin_code=data_dir{:}(admin_code{:}+options.str_direction);
 
 %For SON-2 designate the type of run (Nalt or Plac)
 expression = '([A-Za-z]{4})(?:[\\|\/])?$';
