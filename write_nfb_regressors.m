@@ -8,20 +8,49 @@ else
 end
 
 
+%% Pull variables from dataset (maybe do this in parent script)
+%Infusion (1) no infusion (0)
+inf_no_inf = double(cellfun(@(x) strcmp(x,'A'), data.Infusion) | cellfun(@(x) strcmp(x,'B'), data.Infusion));
+
+%Feedback (1) no feedback (0) is signal vs baseline
+signal_vs_baseline = double(cellfun(@(x) strcmpi(x,'Signal'), data.Feedback) | cellfun(@(x) strcmp(x,'Baseline'), data.Feedback));
+
+%Will improve resposnes yes (1) no (0)
+willImpResp = data.WillImpRespNum==7;
+
+%Will improve resposnes yes (1) no (0)
+impResp = data.ImprovedRespNum==7;
+
 %% Trial
 write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.J2Onset,sprintf('%s_trial',id),true(length(data.TrialNum),1),0,data);
 
-%% Infusion
-write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset,sprintf('%s_infusion_onset',id),true(length(data.TrialNum),1),0,data);
+%% Infusion 1 sec stick
+write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.InfOnset+1,sprintf('%s_infusion_onset',id),true(length(data.TrialNum),1),0,data);
 
-%% Will Improve Responses
-write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_willImpRT',id),true(length(data.TrialNum),1),0,data);
+%% Infusion / no infusion 
+write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset,sprintf('%s_infusion_no_infusion',id),inf_no_inf,0,data);
 
-%% Feedback
-write3Ddeconv_startTimes(reg_file_dest,data.Feed1Onset,data.Feed3Onset,sprintf('%s_feedback_onset',id),true(length(data.TrialNum),1),0,data);
+%% Feedback / no Feedback
+write3Ddeconv_startTimes(reg_file_dest,data.Feed1Onset,data.Feed3Onset,sprintf('%s_feedback_no_feedback',id),signal_vs_baseline,0,data);
 
-%% Improve Responses
-write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+data.ImprovedRt,sprintf('%s_impRT',id),true(length(data.TrialNum),1),0,data);
+%% Will Improve Responses EVENT TIMES ONLY - RT convolv
+write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_willImpRespEvent',id),true(length(data.TrialNum),1),0,data);
+
+%% Will Improve Responses ACTUAL RESPONSES AS PARAMETERIC MOD
+write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_willImpRespMod',id),willImpResp,0,data);
+
+%% Feedback 1 sec stick
+write3Ddeconv_startTimes(reg_file_dest,data.Feed1Onset,data.Feed1Onset+1,sprintf('%s_feedback_onset',id),true(length(data.TrialNum),1),0,data);
+
+%% Improve Responses EVENT TIMES ONLY - RT convolv
+write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+data.ImprovedRt,sprintf('%s_impRespEvent',id),true(length(data.TrialNum),1),0,data);
+
+%% Improve Responses ACTUAL RESPONSES AS PARAMETERIC MOD
+write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+data.ImprovedRt,sprintf('%s_impRespMod',id),impResp,0,data);
+
+%% Censor
+%Worry about this later, ge the model done first
+%create_censor_file(data,id)
 
 
 function [x,y]=write3Ddeconv_startTimes(file_loc,event_beg,event_end,fname,modulator,noFSL,b)
