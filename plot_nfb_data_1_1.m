@@ -1,4 +1,4 @@
-function plot_nfb_data
+function plot_nfb_data_1_1
 %Function to make a bunch of plots for the nfb data
 
 %Clear up any open graphs
