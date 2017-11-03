@@ -1,4 +1,4 @@
-function out=compile_nfb_data(regressor_flag)
+function out=compile_nfb_data_1(regressor_flag)
 %Funciton will organize and create simple plots of nfb task data. For more
 %information see README at https://github.com/heffjos/nfb.
 
@@ -34,9 +34,9 @@ experiment_paths=glob([data_path 'SON*'])';
 
 for experiment_path = experiment_paths
     
-    if strfind(experiment_path{:},'SONRISA1')
-        experiment_path = experiment_path{:};
-    end
+%     if strfind(experiment_path{:},'SONRISA1')
+%         experiment_path = experiment_path{:};
+%     end
     
     %Grab dir list from datalocation
     expression = '.*\d{3,9}.*';
@@ -171,7 +171,7 @@ writetable(T,[data_dir{:} sprintf('subj_%s_all_runs.csv',id{:})])
 
 %Create regressors if needed
 if options.rflag
-    write_nfb_regressors(out.(proto{:}).(['subj' id{:}]).(['admin' admin_code]),out.(proto{:}).(['subj' id{:}]).(['admin' admin_code '_reg_id']))
+    write_nfb_regressors_2(out.(proto{:}).(['subj' id{:}]).(['admin' admin_code]),out.(proto{:}).(['subj' id{:}]).(['admin' admin_code '_reg_id']))
 end
 
 

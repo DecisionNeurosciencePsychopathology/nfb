@@ -1,10 +1,10 @@
-function write_nfb_regressors(data,id)
+function write_nfb_regressors_2(data,id)
 
 %% Datalocation -- set as needed
 if ispc
     reg_file_dest = 'C:/kod/nfb/analysis/regs/'; %Change as needed
 else
-    reg_file_dest = '/Users/martapecina/GitHub/nfb_analysis/regs/';
+    reg_file_dest = '/Users/martapecina/GitHub/Nfb_sonrisa/regs/';
 end
 
 
@@ -50,7 +50,7 @@ write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+dat
 
 %% Censor
 %Worry about this later, ge the model done first
-%create_censor_file(data,id)
+%create_censor_file_2.1(data,id)
 
 
 function [x,y]=write3Ddeconv_startTimes(file_loc,event_beg,event_end,fname,modulator,noFSL,b)

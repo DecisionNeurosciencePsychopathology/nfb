@@ -1,4 +1,4 @@
-function clean_incorrect_response_subjs
+function clean_incorrect_response_subjs_0
 
 %Where are the subjects data located
 data_path = 'E:\Users\wilsonj3\Google Drive\NFB_response\IncorrectResponse';
