@@ -27,7 +27,7 @@ out.SON2_MDF_Plac = [];
 %%Additional options
 options.rflag=regressor_flag;
 options.str_direction = str_direction;
-%% Compile loop
+% Compile loop
 
 %Grab parent directories
 experiment_paths=glob([data_path 'SON*'])';
@@ -116,6 +116,9 @@ if length(files)~=4
     end
 end
 
+%Numerate responses
+T=numerate_responses(T);
+
 %Decide which struct to use & write the data to the subj lvl table
 if strfind(data_dir{:},'SON1')
     out.SON1.(['subj' id{:}]).(['admin' admin_code]) = T;
@@ -193,4 +196,31 @@ ss_data.reg_id = sprintf('%s_%s_%s',proto,id{:},suffix_code);
 % end
 
 
+function T=numerate_responses(T)
 
+T.WillImpRespNum=double(cellfun(@(x) strcmpi(x,'yes'), T.WillImpRespText));
+T.ImprovedRespNum=double(cellfun(@(x) strcmpi(x,'yes'), T.ImprovedRespText));
+
+%Take care of nans
+T.WillImpRespNum(cellfun(@(x) strcmpi(x,'NaN'), T.WillImpRespText))=nan;
+T.ImprovedRespNum(cellfun(@(x) strcmpi(x,'NaN'), T.ImprovedRespText))=nan;
+
+    
+
+
+% % % %Grab field names
+% % % fnames = fieldnames(data);
+% % % for i = 1:length(fnames)
+% % %     if strfind(fnames{i},'MDF')>0 %If it is a master data file
+% % %         data.(fnames{i}).WillImpRespNum=double(cellfun(@(x) strcmpi(x,'yes'), data.(fnames{i}).WillImpRespText));
+% % %         data.(fnames{i}).ImprovedRespNum=double(cellfun(@(x) strcmpi(x,'yes'), data.(fnames{i}).ImprovedRespText));
+% % %         
+% % %         %Take care of nans
+% % %         data.(fnames{i}).WillImpRespNum(cellfun(@(x) strcmpi(x,'NaN'), data.(fnames{i}).WillImpRespText))=nan;
+% % %         data.(fnames{i}).ImprovedRespNum(cellfun(@(x) strcmpi(x,'NaN'), data.(fnames{i}).ImprovedRespText))=nan;
+% % %     end
+% % %     
+% % % end
+% % %         
+        
+        
