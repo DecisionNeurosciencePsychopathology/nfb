@@ -9,7 +9,7 @@ close all
 if ispc
     load('E:/Box Sync/fMRI_shared/NFB/NFB_response/nfball.mat')
 else
-    load('/Users/martapecina/Box Sync/PITT/RESEARCH/fMRI_shared/NFB/NFB_response/nfball.mat')
+    load('/Users/martapecina/Box Sync/PITT/RESEARCH/fMRI_shared/NFB/NFB_response/SON1&2_behav_results/nfball.mat')
 end
 protocols = {'SON1', 'SON2'};
 fig_ct=1;

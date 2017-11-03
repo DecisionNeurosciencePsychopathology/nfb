@@ -35,7 +35,7 @@ experiment_paths=glob([data_path 'SON*'])';
 for experiment_path = experiment_paths
     
     if strfind(experiment_path{:},'SONRISA1')
-        experiment_path = {[experiment_path{:} 'CorrectResponse']};
+        experiment_path = experiment_path{:};
     end
     
     %Grab dir list from datalocation
@@ -50,7 +50,7 @@ for experiment_path = experiment_paths
 end
 
 %% Save final output
-save([data_path '/nfball'],'out')
+save([data_path 'SON1&2_behav_results/nfball'],'out')
 
 
 function out=compile_single_subject_data(out,data_dir,options)
