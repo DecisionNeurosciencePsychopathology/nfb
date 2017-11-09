@@ -7,7 +7,7 @@ close all
 %Load in main data structure  (out)
 %load('/Users/martapecina/Google Drive/fMRI_Responses/NFB_response/nfball.mat')
 if ispc
-    load('E:/Box Sync/fMRI_shared/NFB/NFB_response/nfball.mat')
+    load('E:\Box Sync\fMRI_shared\NFB\NFB_response\SON1&2_behav_results\nfball.mat')
 else
     load('/Users/martapecina/Box Sync/PITT/RESEARCH/fMRI_shared/NFB/NFB_response/SON1&2_behav_results/nfball.mat')
 end

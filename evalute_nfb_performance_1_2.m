@@ -1,4 +1,4 @@
-function evalute_nfb_performance(out)
+function evalute_nfb_performance_1_2(out)
 %Function will evalute nfb subjects responses, place resutls into graphics
 %for ease of viewing and assisting with evaluation of subejcts perofmrance 
 %on a case by case basis as well as experiment wide performance.
@@ -17,6 +17,7 @@ for i = 1:length(fnames)
        data=out.(fnames{i});
 
        %Expermient wide plot
+       options.bar_plot_fig_number = i+100;
        plot_behavior(data,options);
        
        %TODO
@@ -42,24 +43,34 @@ function plot_behavior(data,options)
 %Make this the generic plot funciton with a second arguement graph_options
 %graph_options will have things like Infusion_title, subject(s)_name,
 %not_infusion_title, type_of_plot(bar line ... )ect...
-infusion_trials = cellfun(@(x) strcmpi(x,'A') | strcmpi(x,'C') ,data.Infusion);
+infusion_trials = cellfun(@(x) strcmpi(x,'A') | strcmpi(x,'B') ,data.Infusion);
 will_imp_resp_inf = data.WillImpRespNum(infusion_trials);
 will_imp_resp_no_inf = data.WillImpRespNum(~infusion_trials);
-figure(1)
+figure(options.bar_plot_fig_number)
 subplot(1,2,1)
 bar([sum(will_imp_resp_inf==1),sum(will_imp_resp_inf==0), sum(isnan(will_imp_resp_inf))])
+title([options.dfname ' Infusion will improve'])
+ax=gca;
+ax.XTickLabel = {'Yes', 'No', 'Nan'};
 subplot(1,2,2)
 bar([sum(will_imp_resp_no_inf==1),sum(will_imp_resp_no_inf==0), sum(isnan(will_imp_resp_no_inf))])
-title('Infusion')
+title('No Infusion will improve')
+ax=gca;
+ax.XTickLabel = {'Yes', 'No', 'Nan'};
 
 imp_resp_inf = data.ImprovedRespNum(infusion_trials);
 imp_resp_no_inf = data.ImprovedRespNum(~infusion_trials);
-figure(2)
+figure(options.bar_plot_fig_number*2)
 subplot(1,2,1)
 bar([sum(imp_resp_inf==1),sum(imp_resp_inf==0), sum(isnan(imp_resp_inf))])
+title([options.dfname ' Infusion improve'])
+ax=gca;
+ax.XTickLabel = {'Yes', 'No', 'Nan'};
 subplot(1,2,2)
 bar([sum(imp_resp_no_inf==1),sum(imp_resp_no_inf==0), sum(isnan(imp_resp_no_inf))])
-title('No Infusion')
+title('No Infusion improve')
+ax=gca;
+ax.XTickLabel = {'Yes', 'No', 'Nan'};
 
 
 %Plot the mean responses for son 1 (with son2 plac subjects) & 2 and son 2
@@ -154,11 +165,13 @@ for i = 1:length(conditions)
     plot(smooth(group_specs.(['cond_' lower(conditions{i}) '_willImpMeanResponse'])))
     hold on
     title(sprintf('Subject %s Will improve by stimulus %s',group_specs.name, group_specs.current_admin))
+    axis([0 35 0 1])
     
     subplot(2,1,2)
     plot(smooth(group_specs.(['cond_' lower(conditions{i}) '_ImpMeanResponse'])))
     hold on
     title(sprintf('Subject %s Improved by stimulus %s',group_specs.name, group_specs.current_admin))
+    axis([0 35 0 1])
 end
 legend('A', 'B', 'C', 'D', 'Location','best')
 fig_num = fig_num+1;
