@@ -261,14 +261,15 @@ for i = 1:length(conditions)
     %%plot use subplot(2,1,1) and comment out the contingencies
     
     figure(fig_num)
+    lw=4;
     subplot(2,1,1)
-    plot(smooth(plot_data_will_imp))
+    plot(smooth(plot_data_will_imp),'LineWidth',lw)
     ylim([-.5 1.5])
     hold on
     title(sprintf('Subject %s Will improve by stimulus %s',subj_specs.name, subj_specs.current_admin))
     
     subplot(2,1,2)
-    plot(smooth(plot_data_imp))
+    plot(smooth(plot_data_imp),'LineWidth',lw)
     ylim([-.5 1.5])
     hold on
     title(sprintf('Subject %s Improved by stimulus %s',subj_specs.name, subj_specs.current_admin))

@@ -83,11 +83,26 @@ write3Ddeconv_startTimes(reg_file_dest,motor_onset,motor_offset,sprintf('%s_righ
 %% Infusion 1 sec stick
 write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.InfOnset+1,sprintf('%s_infusion_onset',id),true(length(data.TrialNum),1),0,data);
 
+% Infusion aligned from onset to end of willImp RT
+write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_infusion_onsetToRT',id),true(length(data.TrialNum),1),0,data);
+
 %% Infusion / no infusion 
 write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset,sprintf('%s_infusion_no_infusion',id),inf_no_inf,0,data);
 
+%Align inf no inf with RT
+write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_infusion_no_infusion_RTconvolv',id),inf_no_inf,0,data);
+
+%Align inf no inf from onset to end of RT
+write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_infusion_no_infusion_onsetToRT',id),inf_no_inf,0,data);
+
 %% Feedback / no Feedback -- determine which feedback gives the best signal -- it is fb2
 write3Ddeconv_startTimes(reg_file_dest,data.Feed2Onset,data.Feed2Onset+1,sprintf('%s_feedback_no_feedback',id),feedback,0,data);
+
+%Align feedback no feedback with RT
+write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+data.ImprovedRt,sprintf('%s_feedback_no_feedback_RTconvolv',id),feedback,0,data);
+
+%Align feedback no feedback from feedback onset to the end of RT
+write3Ddeconv_startTimes(reg_file_dest,data.Feed2Onset,data.ImprovedOnset+data.ImprovedRt,sprintf('%s_feedback_no_feedback_onsetToRT',id),feedback,0,data);
 
 %% Will Improve Responses EVENT TIMES ONLY - RT convolv
 write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_willImpRespEvent',id),true(length(data.TrialNum),1),0,data);
@@ -104,6 +119,9 @@ write3Ddeconv_startTimes(reg_file_dest,data.Feed1Onset,data.Feed1Onset+1,sprintf
 write3Ddeconv_startTimes(reg_file_dest,data.Feed2Onset,data.Feed2Onset+1,sprintf('%s_feedback2_onset',id),true(length(data.TrialNum),1),0,data);
 write3Ddeconv_startTimes(reg_file_dest,data.Feed3Onset,data.Feed3Onset+1,sprintf('%s_feedback3_onset',id),true(length(data.TrialNum),1),0,data);
 write3Ddeconv_startTimes(reg_file_dest,data.Feed1Onset,data.ImprovedOnset,sprintf('%s_feedback_all',id),true(length(data.TrialNum),1),0,data);
+
+%Align feedback from feedback onset to end of RT
+write3Ddeconv_startTimes(reg_file_dest,data.Feed2Onset,data.ImprovedOnset+data.ImprovedRt,sprintf('%s_feedback2_onsetToRT',id),true(length(data.TrialNum),1),0,data);
 
 %% Improve Responses EVENT TIMES ONLY - RT convolv
 write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+data.ImprovedRt,sprintf('%s_impRespEvent',id),true(length(data.TrialNum),1),0,data);

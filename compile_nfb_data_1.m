@@ -198,12 +198,12 @@ ss_data.reg_id = sprintf('%s_%s_%s',proto,id{:},suffix_code);
 
 function T=numerate_responses(T)
 
-T.WillImpRespNum=double(cellfun(@(x) strcmpi(x,'yes'), T.WillImpRespText));
-T.ImprovedRespNum=double(cellfun(@(x) strcmpi(x,'yes'), T.ImprovedRespText));
+T.WillImpRespBin=double(cellfun(@(x) strcmpi(x,'yes'), T.WillImpRespText));
+T.ImprovedRespBin=double(cellfun(@(x) strcmpi(x,'yes'), T.ImprovedRespText));
 
 %Take care of nans
-T.WillImpRespNum(cellfun(@(x) strcmpi(x,'NaN'), T.WillImpRespText))=nan;
-T.ImprovedRespNum(cellfun(@(x) strcmpi(x,'NaN'), T.ImprovedRespText))=nan;
+T.WillImpRespBin(cellfun(@(x) strcmpi(x,'NaN'), T.WillImpRespText))=nan;
+T.ImprovedRespBin(cellfun(@(x) strcmpi(x,'NaN'), T.ImprovedRespText))=nan;
 
     
 
