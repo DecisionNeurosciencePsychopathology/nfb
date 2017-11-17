@@ -33,16 +33,22 @@ will_imp=cellfun(@(x) str2double(x),cellfun(@count_subj_response, data.WillImpRe
 %Subj responses for improved
 imp=cellfun(@(x) str2double(x),cellfun(@count_subj_response, data.ImprovedRespText, 'UniformOutput', false));
 
-us = [will_imp'; imp'];
-
+resp = [will_imp'; imp'];
+fb = (cellfun(@(x) strcmp(x,'Signal'), data.Feedback))'; %Feedback = Signal or Baseline
 %Set up y -- clean this up 
- y = [(cellfun(@(x) strcmp(x,'A'), data.Infusion))';
+ y = data.WillImpRespBin;
+ 
+ 
+ 
+ 
+ %Set up y -- clean this up 
+ cond = [(cellfun(@(x) strcmp(x,'A'), data.Infusion))';
      (cellfun(@(x) strcmp(x,'B'), data.Infusion))';
      (cellfun(@(x) strcmp(x,'C'), data.Infusion))';
      (cellfun(@(x) strcmp(x,'D'), data.Infusion))';];
  
  %Create condition array for update indexing
- condition = double(y);
+ condition = double(cond);
  condition(2,:)=condition(2,:).*2;
  condition(3,:)=condition(3,:).*3;
  condition(4,:)=condition(4,:).*4;
@@ -56,11 +62,14 @@ us = [will_imp'; imp'];
  
 %Set up u - second half is shifted akin to bandit VBA!
 u = [cs 0; ...  % 1 infusion on current trial
-    [us [0;0]]; ...  % 2,3 willImp resp; Imp resp
-    condition 0;
+    [resp [0;0]]; ...  % 2,3 willImp resp; Imp resp
+    condition 0; ...
+    fb 0; ...
     0 cs; ...% 4 infusion on previous trial (leading to the current, pre-update value)
-    [[0;0] us]; ... % 5,6 willImp resp; Imp resp previous trial
-    0 condition; 
+    [[0;0] resp]; ... % 5,6 willImp resp; Imp resp previous trial
+    0 condition;
+    0 fb; %feedback on previous trial
+    fb(2:end) [0 0]; % feedback on next trial
     ]; 
  
 %% define f and g functions
@@ -71,10 +80,13 @@ g_fname=@g_sigmoid; %observation function
 options.inF.noCS = 0;
 options.inG.noCS = 0;
 
+options.sources(1).type=1;
+options.sources(1).out  = 1;
+
 %options.isYout      = zeros(size(y)) ;
 options.isYout=isnan(y) ;
-willImpMissedTrials= [isnan(u(2,:)) | isnan(u(6,:))];
-options.isYout(:,willImpMissedTrials')=1;
+%willImpMissedTrials= [isnan(u(2,:)) | isnan(u(6,:))];
+%options.isYout(:,willImpMissedTrials')=1;
 options.isYout(:,1) = 1;
 %options.inF.binomial_override = 1;
 
@@ -82,7 +94,8 @@ options.isYout(:,1) = 1;
 options.skipf = zeros(1,length(y));
 options.skipf(1) = 1;
 
-
+%Turn off measurement noise
+options.binomial = 1 ;
 
 dim = struct('n',4,'n_theta',2,'n_phi',1);
 priors.muTheta = zeros(dim.n_theta,1);

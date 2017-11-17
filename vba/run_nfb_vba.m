@@ -30,18 +30,20 @@ for ii = 1:length(subj_names)
       vba_input=struct; %Initialize the input variable for the vba script      
       
       %Get and set the data
-      data = nfball.SON1.(subj_names{ii}).(admins{jj}); 
+      %data = nfball.SON2.(subj_names{ii}).(admins{jj}); 
+      data = nfball.SON2.subj009.adminPlac; 
       vba_input.data = data;      
       
-      vba_input.admin = admins{jj}; %Get administration
-      vba_input.subj_name = subj_names{ii}; %Get subj name
+      %vba_input.admin = admins{jj}; %Get administration
+      %vba_input.subj_name = subj_names{ii}; %Get subj name
+      vba_input.subj_name = subj_names{8}; %Get subj name
       %TODO graphics, multinomial, multisession,ect
-      try
+%       try
         [posterior,out]=pavlov_vba_sonsira(vba_input);
         L(ii,jj) = out.F;
-      catch
-          fprintf('Subject %s died...\n\n',vba_input.subj_name)
-          L(ii,jj) = nan;
-      end
+%       catch
+%           fprintf('Subject %s died...\n\n',vba_input.subj_name)
+%           L(ii,jj) = nan;
+%       end
    end
 end

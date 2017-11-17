@@ -12,12 +12,13 @@ Vst = zeros(1,4);
 
 
 % expectation = u_t(6); %will improve response
-vt_to_update = u_t(8); %Index of which condition to update;
+vt_to_update = u_t(9); %Index of which condition to update;
 
 
-%For now we are only concerned with will improve responses
-fb = u_t(6); 
+%Grab the feedback
+fb = u_t(10); 
 
+%Update the proper stimuli presented
 update_vector = zeros(4,1);
 update_vector(vt_to_update)=1;
 update_vector = logical(update_vector); %Needs to be a logical

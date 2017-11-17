@@ -16,10 +16,12 @@ function [gx] = g_sigmoid(Vst,Phi,u_t,inG)
 
 beta = exp(Phi(1));
 
-x = Vst(1:4); %Hardcoded = bad!
+x = Vst(u_t(11)); %Hardcoded = bad! Feedback on previous trial
 
-p_choice = (exp((x-max(x))/beta)) / (sum(exp((x-max(x))/beta))); %Divide by temperature
-gx = p_choice';
+gx(u_t(11)) = sigm(x,[],beta); %Update only the previous stimuli?
+
+%p_choice = (exp((x-max(x))/beta)) / (sum(exp((x-max(x))/beta))); %Divide by temperature
+%gx = p_choice';
 
 if any(isnan(gx))>0 || any(isinf(gx))
     stop=1;
