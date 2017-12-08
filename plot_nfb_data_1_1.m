@@ -300,14 +300,15 @@ fig_num = fig_num+1;
 function fig_num = plot_group_average_response(data,fig_num,group_specs)
 conditions = unique(data.Infusion);
 for i = 1:length(conditions)
+    colors = {'r','b','g','y'};
     figure(fig_num)
     subplot(2,1,1)
-    plot(smooth(group_specs.(['cond_' lower(conditions{i}) '_willImpMeanResponse'])))
+    plot(smooth(group_specs.(['cond_' lower(conditions{i}) '_willImpMeanResponse'])), colors{i}, 'LineWidth',3)
     hold on
     title(sprintf('Subject %s Will improve by stimulus %s',group_specs.name, group_specs.current_admin))
     
     subplot(2,1,2)
-    plot(smooth(group_specs.(['cond_' lower(conditions{i}) '_ImpMeanResponse'])))
+    plot(smooth(group_specs.(['cond_' lower(conditions{i}) '_ImpMeanResponse'])), colors{i}, 'LineWidth',3)
     hold on
     title(sprintf('Subject %s Improved by stimulus %s',group_specs.name, group_specs.current_admin))
 end
