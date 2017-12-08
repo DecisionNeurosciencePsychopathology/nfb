@@ -1,4 +1,4 @@
-function [posterior,out]=pavlov_vba_sonsira(input_struct)
+function [posterior,out]=pavlov_vba_sonsira(vba_input)
 %NFB placebo vba modeling code
 
 %TODO set up all the variables and defaults, is no struct is given just
@@ -7,15 +7,22 @@ function [posterior,out]=pavlov_vba_sonsira(input_struct)
 
 %To save or not to save results
 save_results=1;
+model_name = 'vanilla';
+
 
 %To plot or not
-graphics=1;
+graphics=0;
+
+%If we want to yoke the stimuli to have the same starting parameters
+yoke_stimuli = 0;
+yoke_muX = 0;
+one_hidden_state=1;
 
 %% read in data
 try
-    data = input_struct.data;
+    data = vba_input.data;
 catch
-    data = input_struct;
+    data = vba_input;
 end
 
 %Set up simple test case for now
@@ -33,15 +40,16 @@ will_imp=cellfun(@(x) str2double(x),cellfun(@count_subj_response, data.WillImpRe
 %Subj responses for improved
 imp=cellfun(@(x) str2double(x),cellfun(@count_subj_response, data.ImprovedRespText, 'UniformOutput', false));
 
-resp = [will_imp'; imp'];
+%Subj feedback 
 fb = (cellfun(@(x) strcmp(x,'Signal'), data.Feedback))'; %Feedback = Signal or Baseline
+
+resp = [will_imp'; imp'];
 %Set up y -- clean this up 
- y = data.WillImpRespBin;
+%  y = [data.WillImpRespBin(2:end); NaN]';
+ y = data.WillImpRespBin'; % looks like you don't need to shift the y, Jon to check
  
  
- 
- 
- %Set up y -- clean this up 
+ %Create the hidden state index
  cond = [(cellfun(@(x) strcmp(x,'A'), data.Infusion))';
      (cellfun(@(x) strcmp(x,'B'), data.Infusion))';
      (cellfun(@(x) strcmp(x,'C'), data.Infusion))';
@@ -72,14 +80,16 @@ u = [cs 0; ...  % 1 infusion on current trial
     fb(2:end) [0 0]; % feedback on next trial
     ]; 
  
+
+%Delete later check if exp aligns with rating
+% u(10,4) = 10;
+% u(10,10) = 10;
+
 %% define f and g functions
 f_fname = @f_pavlov; % evolution function 
 g_fname=@g_sigmoid; %observation function
 
 %% Set up options
-options.inF.noCS = 0;
-options.inG.noCS = 0;
-
 options.sources(1).type=1;
 options.sources(1).out  = 1;
 
@@ -97,7 +107,15 @@ options.skipf(1) = 1;
 %Turn off measurement noise
 options.binomial = 1 ;
 
-dim = struct('n',4,'n_theta',2,'n_phi',1);
+% dim = struct('n',4,'n_theta',1,'n_phi',1); % no decay version
+if one_hidden_state
+    num_hidden_states=1;
+    model_name='one_hidden_state';
+else
+    num_hidden_states=4;
+end
+
+dim = struct('n',num_hidden_states,'n_theta',2,'n_phi',2);
 priors.muTheta = zeros(dim.n_theta,1);
 priors.SigmaTheta = 1e1*eye(dim.n_theta);
 %priors.muTheta(1) = -1.3801; %% fix LR at .2
@@ -117,21 +135,45 @@ options.DisplayWin = graphics;
 
 %Set prior covariance of x_0
 %priors.SigmaX0 = zeros*eye(dim.n);
-priors.SigmaX0 = 1e1*eye(dim.n); %% try fitting prior expectancy
+priors.muX0 = zeros(dim.n,1);
 
+if yoke_stimuli
+    model_name = 'yoked'; 
+    priors.SigmaX0 = 1e1*eye(dim.n);  %% try fitting prior expectancy
+    
+    %A and B
+    priors.SigmaX0(2,1) = priors.SigmaX0(1,1);
+    priors.SigmaX0(1,2) = priors.SigmaX0(1,1);
+    
+    %C and D
+    priors.SigmaX0(3,4) = priors.SigmaX0(1,1);
+    priors.SigmaX0(4,3) = priors.SigmaX0(1,1);
+elseif yoke_muX
+    model_name = 'yoked_muX';
+    priors.muX0 = [0.5 0.5 0 0]';
+    priors.SigmaX0 = zeros(dim.n);
+else
+    priors.SigmaX0 = 1e1*eye(dim.n); %% try fitting prior expectancy
+end
 %Set prior mean for x_0
 %priors.muX0 = zeros(dim.n,1);
-priors.muX0 = ones(dim.n,1);
+
+%Set up options for evolution and observation functions
+options.inF.num_hidden_states = num_hidden_states;
+options.inG.num_hidden_states = num_hidden_states;
+
 
 
 [posterior,out] = VBA_NLStateSpaceModel(y,u,f_fname,g_fname,dim,options);
 
 %L(ct) = out.F;
+ 
+% if save_results
+%    save(sprintf('vba_data/subj_%s_%s_vba_data.mat',vba_input.subj_name, vba_input.admin),'out','posterior')
+%    
+% end
 
-if save_results
-    save(sprintf('vba_data/subj_%s_%s_vba_data.mat',input_struct.subj_name, input_struct.admin),'out','posterior')
-end
-
+save(sprintf('vba_data/subj_%s_%s_vba_data_%s.mat',vba_input.subj_name, vba_input.admin, model_name),'out','posterior')
 
 %--------------------------------------------------------------------------
 function y = count_subj_response(str)
