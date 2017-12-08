@@ -1,9 +1,9 @@
-function L=run_nfb_vba
+function L_struct=run_nfb_vba
 %Parent script to run subjects through VBA data analysis scripts
 
 %% Load in main data structure
 if ispc
-    load('E:\Box Sync\fMRI_shared\NFB_response\nfball.mat') %Called out
+    load('E:\Box Sync\fMRI_shared/NFB/NFB_response/SON1&2_behav_results/nfball.mat') %Called out
 else
     load('/Users/martapecina/Box Sync/PITT/RESEARCH/fMRI_shared/NFB/NFB_response/SON1&2_behav_results/nfball.mat')
 end
@@ -44,8 +44,17 @@ for kk = 1:length(protocol)
          
             fprintf('Fitting %s %s from %s using VBA now \n\n',protocol{kk}, vba_input.subj_name, admins{jj})
             
-            [posterior,out]=pavlov_vba_sonsira(vba_input);
-            L(ii,jj) = out.F; %Output of log model evidence
+            [posterior,out]=pavlov_vba_sonrisa(vba_input);
+            
+            %Save the L as a struct which we can then use for model
+            %comparisons
+            try 
+                L_struct.(protocol{kk}).(admins{jj}); 
+            catch
+                L_struct.(protocol{kk}).(admins{jj}) = []; 
+            end
+                
+            L_struct.(protocol{kk}).(admins{jj}) = [L_struct.(protocol{kk}).(admins{jj}) out.F]; %Output of log model evidence
             
             fprintf('----------------------------------------------\n\n')
             %       catch

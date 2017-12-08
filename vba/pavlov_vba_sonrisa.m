@@ -11,12 +11,12 @@ model_name = 'vanilla';
 
 
 %To plot or not
-graphics=1;
+graphics=0;
 
 %If we want to yoke the stimuli to have the same starting parameters
 yoke_stimuli = 0;
 yoke_muX = 0;
-one_hidden_state=1;
+one_hidden_state=0;
 
 %% read in data
 try
