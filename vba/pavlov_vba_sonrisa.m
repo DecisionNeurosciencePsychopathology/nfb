@@ -1,4 +1,4 @@
-function [posterior,out]=pavlov_vba_sonsira(vba_input)
+function [posterior,out]=pavlov_vba_sonrisa(vba_input)
 %NFB placebo vba modeling code
 
 %TODO set up all the variables and defaults, is no struct is given just
@@ -11,7 +11,7 @@ model_name = 'vanilla';
 
 
 %To plot or not
-graphics=0;
+graphics=1;
 
 %If we want to yoke the stimuli to have the same starting parameters
 yoke_stimuli = 0;
