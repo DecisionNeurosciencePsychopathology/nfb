@@ -1,7 +1,15 @@
-function evalute_nfb_performance_1_2(out)
+function evalute_nfb_performance_1_2
 %Function will evalute nfb subjects responses, place resutls into graphics
 %for ease of viewing and assisting with evaluation of subejcts perofmrance 
 %on a case by case basis as well as experiment wide performance.
+
+%Load i nthe data automatically
+if ispc
+    load('E:\Box Sync\fMRI_shared\NFB\NFB_response\SON1&2_behav_results\nfball.mat')
+else
+    load('/Users/martapecina/Box Sync/PITT/RESEARCH/fMRI_shared/NFB/NFB_response/SON1&2_behav_results/nfball.mat')
+end
+
 
 %Grab field names -- we only want to use Master Data Files
 fnames = fieldnames(out);
@@ -44,8 +52,8 @@ function plot_behavior(data,options)
 %graph_options will have things like Infusion_title, subject(s)_name,
 %not_infusion_title, type_of_plot(bar line ... )ect...
 infusion_trials = cellfun(@(x) strcmpi(x,'A') | strcmpi(x,'B') ,data.Infusion);
-will_imp_resp_inf = data.WillImpRespNum(infusion_trials);
-will_imp_resp_no_inf = data.WillImpRespNum(~infusion_trials);
+will_imp_resp_inf = data.WillImpRespBin(infusion_trials);
+will_imp_resp_no_inf = data.WillImpRespBin(~infusion_trials);
 figure(options.bar_plot_fig_number)
 subplot(1,2,1)
 bar([sum(will_imp_resp_inf==1),sum(will_imp_resp_inf==0), sum(isnan(will_imp_resp_inf))])
@@ -58,8 +66,8 @@ title('No Infusion will improve')
 ax=gca;
 ax.XTickLabel = {'Yes', 'No', 'Nan'};
 
-imp_resp_inf = data.ImprovedRespNum(infusion_trials);
-imp_resp_no_inf = data.ImprovedRespNum(~infusion_trials);
+imp_resp_inf = data.ImprovedRespBin(infusion_trials);
+imp_resp_no_inf = data.ImprovedRespBin(~infusion_trials);
 figure(options.bar_plot_fig_number*2)
 subplot(1,2,1)
 bar([sum(imp_resp_inf==1),sum(imp_resp_inf==0), sum(isnan(imp_resp_inf))])

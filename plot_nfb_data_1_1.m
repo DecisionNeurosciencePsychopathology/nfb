@@ -24,7 +24,7 @@ for protocol = protocols
         %admins=fieldnames(out.(protocol{:}).(subj{:}))';
         admins_tmp=regexp(fieldnames(out.(protocol{:}).(subj{:}))','\w+[0-9]$|\w+Nalt$|\w+Plac$','match');
         admins=admins_tmp(~cellfun(@isempty,admins_tmp));
-        admins=(admins{:});
+        admins=[admins{:}];
         for admin = admins
             %Pull single subject data
             data=out.(protocol{:}).(subj{:}).(admin{:});

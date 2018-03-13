@@ -29,6 +29,11 @@ for kk = 1:length(protocol)
                 continue
             end
             
+            %filter any "bad" subjects
+% % %             if any(ismember(bad_subjs,subj_names{ii}))
+% % %                 continue; %Skip them
+% % %             end
+            
             vba_input=struct; %Initialize the input variable for the vba script
             
             %Get and set the data
@@ -55,6 +60,7 @@ for kk = 1:length(protocol)
             end
                 
             L_struct.(protocol{kk}).(admins{jj}) = [L_struct.(protocol{kk}).(admins{jj}) out.F]; %Output of log model evidence
+            
             
             fprintf('----------------------------------------------\n\n')
             %       catch

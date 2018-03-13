@@ -13,8 +13,16 @@ end
 %Set some constants grab the block lenths
 frequency_scale_hz = 10;
 scan_tr = 1; %According to 3dinfo -verb!
-block_lengths = vol_T(strcmp(vol_T.Subjects,id),:);
-block_lengths = table2array(block_lengths(1,2:end));
+
+%Try to keep vol lookup table updated
+if any(strcmp(vol_T.Subjects,id))
+    block_lengths = vol_T(strcmp(vol_T.Subjects,id),:);
+    block_lengths = table2array(block_lengths(1,2:end));
+else
+    %However if subjects are not in vol_info we assume all runs are
+    %completed with all volumes intact
+    block_lengths = [672 672 672 672];
+end
 
 
 %Set the onset time
