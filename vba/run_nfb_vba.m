@@ -1,4 +1,4 @@
-function L_struct=run_nfb_vba
+ function L_struct=run_nfb_vba
 %Parent script to run subjects through VBA data analysis scripts
 
 %% Load in main data structure
@@ -18,9 +18,9 @@ clear out
 
 %For SON1
 %protocol = {'SON1', 'SON2'};
-protocol = {'SON1'};
-model_names = {'null','oneLR', 'twoLR', 'twoLR_S', 'twoLR_S_fixD', 'oneLR_S', 'oneLR_S_fixD', 'oneLR_fixD','twoLR_fixD'};
-%model_names = {'oneLR_fixD','twoLR_fixD'};
+protocol = {'SON1','SON2'};
+%model_names = {'null','oneLR_twoK','oneLR_fixD_twoK','twoLR_twoK','twoLR_fixD','twoLR_S_twoK','twoLR_S_fixD_twoK','twoLR_S_fixD_oneK','oneLR_S_twoK','oneLR_S_fixD_twoK','twoLR_S_fixD_m_twoB_twoK','momentum','momentum_oneK'};
+model_names = {'null','twoLR_S_fixD_oneK'};
 
 
 for model_name = model_names

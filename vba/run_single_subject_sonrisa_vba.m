@@ -9,6 +9,6 @@ vba_input.data = nfball.(protocol{:}).(subj_name{:}).(admin{:});
 vba_input.protocol=protocol{:};
 vba_input.admin=admin{:};
 vba_input.subj_name = subj_name{:};
-model_name = 'null';
+model_name = 'twoLR_S_fixD_oneK';
 
 [posterior,out]=pavlov_vba_sonrisa(vba_input, model_name);

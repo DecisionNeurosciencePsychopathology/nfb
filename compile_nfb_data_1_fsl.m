@@ -1,4 +1,4 @@
-function out=compile_nfb_data_1(regressor_flag)
+function out=compile_nfb_data_1_fsl(regressor_flag)
 %Funciton will organize and create simple plots of nfb task data. For more
 %information see README at https://github.com/heffjos/nfb.
 %
@@ -6,7 +6,7 @@ function out=compile_nfb_data_1(regressor_flag)
 %out=compile_nfb_data_1(1)
 
 %For now...
-global gen_concat_reg
+global gen_concat_reg final_recorded_time
 
 gen_concat_reg = 0; %1==AFNI 0==FSL
 
@@ -73,9 +73,10 @@ son2_all_tmp = [out.SON2_MDF_Nalt; out.SON2_MDF_Plac];
 %Sort
 son1_all_tmp = sortrows(son1_all_tmp,'Participant','ascend');
 son2_all_tmp = sortrows(son2_all_tmp,'Participant','ascend');
-sortedNames = sort(son1_all_tmp.Properties.VariableNames(2:end));
-out.son1_all = [son1_all_tmp(:,1) son1_all_tmp(:,sortedNames)];
-out.son2_all = [son2_all_tmp(:,1) son2_all_tmp(:,sortedNames)];
+sortedNames_son1 = sort(son1_all_tmp.Properties.VariableNames(2:end));
+sortedNames_son2 = sort(son2_all_tmp.Properties.VariableNames(2:end));
+out.son1_all = [son1_all_tmp(:,1) son1_all_tmp(:,sortedNames_son1)];
+out.son2_all = [son2_all_tmp(:,1) son2_all_tmp(:,sortedNames_son2)];
 
 %Write
 writetable(out.son1_all,[data_path 'SON1&2_behav_results/son1_all.csv']);
@@ -184,7 +185,9 @@ T.subject_id = repmat({id_tmp},height(T),1);
 
 %TODO: fix this to make it more generic allowing for differnt models to be
 %easily chosen, also spruce up the loading of vba parameters
-vba_file = glob(sprintf('/Users/martapecina/GitHub/Nfb_sonrisa/vba_data/twoLR_S_fixD_oneK/subj_subj%s_admin%s_vba_data_*.mat',id{:},admin_code));
+model = 'twoLR_S_fixD_oneK';
+vba_file = glob(sprintf('/Users/martapecina/GitHub/Nfb_sonrisa/vba_data/%s/subj_subj%s_admin%s_vba_data_*.mat',model,id{:},admin_code));
+%vba_file = glob(sprintf('/Users/martapecina/GitHub/Nfb_sonrisa/vba_data/exp_yoked/subj_subj%s_admin%s_vba_data_*.mat',id{:},admin_code));
 if ~isempty(vba_file)
     vba_data = load(vba_file{:},'out','posterior');
     close all; %In case figures got saved too...
@@ -295,8 +298,16 @@ for son_2_subj = son_2_subjs'
         data.SON1.(['subj' son_1_id]).admin1 = tmp_data;
         data.SON1.(['subj' son_1_id]).admin1_reg_id = ['SON1_' son_1_id '_a']; %add reg id
         
-        %Add to SON1 admin 1 dataframe
-        data.SON1_MDF_1 = [data.SON1_MDF_1; tmp_data]; 
+        %Add to SON1 admin 1 dataframe -- This is ugly fix it up
+        try
+            data.SON1_MDF_1 = [data.SON1_MDF_1; tmp_data];
+        catch
+            tmp_data_colmissing = setdiff(data.SON1_MDF_1.Properties.VariableNames, tmp_data.Properties.VariableNames);
+            data.SON1_MDF_1_colmissing = setdiff(tmp_data.Properties.VariableNames, data.SON1_MDF_1.Properties.VariableNames);
+            tmp_data = [tmp_data array2table(nan(height(tmp_data), numel(tmp_data_colmissing)), 'VariableNames', tmp_data_colmissing)];
+            data.SON1_MDF_1 = [data.SON1_MDF_1 array2table(nan(height(data.SON1_MDF_1), numel(data.SON1_MDF_1_colmissing)), 'VariableNames', data.SON1_MDF_1_colmissing)];
+            data.SON1_MDF_1 = [data.SON1_MDF_1; tmp_data];
+        end
     end
     
 end
@@ -324,6 +335,8 @@ end
 
 function write_nfb_regressors_2(data,id)
 
+global final_recorded_time
+
 %% Datalocation -- set as needed
 if ispc
     reg_file_dest = 'C:/kod/nfb/analysis/regs/'; %Change as needed
@@ -331,14 +344,26 @@ else
     reg_file_dest = '/Users/martapecina/GitHub/Nfb_sonrisa/regs/';
 end
 
+
+%Pull the final recorded times
+runs = unique(data.Run);
+for run = 1:max(runs)
+   final_recorded_time(run) = data.J2Onset(max(data.TrialNum(data.Run==run))==data.TrialNum & data.Run==run);
+end
+final_recorded_time = cumsum(final_recorded_time);
+
+
 %% Pull variables from dataset (maybe do this in parent script)
 %Infusion (1) no infusion (-1)
 inf_no_inf = double(cellfun(@(x) strcmp(x,'A'), data.Infusion) | cellfun(@(x) strcmp(x,'B'), data.Infusion));
-inf_no_inf(inf_no_inf==0) = -1;
+inf_no_inf_contrast = inf_no_inf;
+inf_no_inf_contrast(inf_no_inf==0) = -1;
+%inf_no_inf(inf_no_inf==0) = -1;
 
 %Feedback (1) no feedback (-1) is signal vs baseline
 feedback = double(cellfun(@(x) strcmpi(x,'Signal'), data.Feedback));
-feedback(feedback==0) = -1;
+feedback_contrast = feedback;
+feedback_contrast(feedback==0) = -1;
 
 %Will improve responses yes (1) no (-1)
 willImpResp = double(cellfun(@(x) strcmpi(x,'yes'), data.WillImpRespText));
@@ -421,8 +446,17 @@ write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.WillImpOnset+1,spr
 %% Will Improve Responses ACTUAL RESPONSES AS PARAMETERIC MOD
 write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_willImpRespMod',id),willImpResp,data);
 
+
+
+%IR IRo
+%write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.J1Onset,sprintf('%s_IR',id),inf_no_inf.*willImpResp,data);
+%write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.J1Onset,sprintf('%s_IRo',id),~inf_no_inf.*willImpResp,data);
+
+write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.J1Onset,sprintf('%s_IRp',id),inf_no_inf.*data.WillImpRespBin,data);
+write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.J1Onset,sprintf('%s_IRp0',id),~inf_no_inf.*data.WillImpRespBin,data);
+
 %% Infusion / no infusion 
-write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset,sprintf('%s_infusion_no_infusion_exact',id),inf_no_inf,data);
+write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset,sprintf('%s_infusion_no_infusion_exact',id),inf_no_inf_contrast,data);
 write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset,sprintf('%s_infusion_exact',id),inf_no_inf,data);
 write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset,sprintf('%s_no_infusion_exact',id),~inf_no_inf,data);
 
@@ -430,10 +464,10 @@ write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset,sprintf('
 %write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.InfOnset+4,sprintf('%s_infusion_no_infusion_',id),inf_no_inf,data);
 
 %Align inf no inf with RT
-write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_infusion_no_infusion_RTconvolv',id),inf_no_inf,data);
+write3Ddeconv_startTimes(reg_file_dest,data.WillImpOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_infusion_no_infusion_RTconvolv',id),inf_no_inf_contrast,data);
 
 %Align inf no inf from onset to end of RT
-write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_infusion_no_infusion_onsetToRT',id),inf_no_inf,data);
+write3Ddeconv_startTimes(reg_file_dest,data.InfOnset,data.WillImpOnset+data.WillImpRt,sprintf('%s_infusion_no_infusion_onsetToRT',id),inf_no_inf_contrast,data);
 
 %% Feedback 1 sec stick - start at inflection of feedback signal
 %Feed 1 onset is the start of the feedback screen
@@ -457,7 +491,9 @@ write3Ddeconv_startTimes(reg_file_dest,data.Feed2Onset,data.ImprovedOnset,sprint
 write3Ddeconv_startTimes(reg_file_dest,data.Feed2Onset,data.Feed2Onset+1,sprintf('%s_feedback_no_feedback',id),feedback,data);
 
 %Align as exact time difference 
-write3Ddeconv_startTimes(reg_file_dest,data.Feed2Onset,data.ImprovedOnset,sprintf('%s_feedback_no_feedback_exact',id),feedback,data);
+write3Ddeconv_startTimes(reg_file_dest,data.Feed2Onset,data.ImprovedOnset,sprintf('%s_feedback_no_feedback_exact',id),feedback_contrast,data);
+write3Ddeconv_startTimes(reg_file_dest,data.Feed2Onset,data.ImprovedOnset,sprintf('%s_feedback_exact',id),feedback,data);
+write3Ddeconv_startTimes(reg_file_dest,data.Feed2Onset,data.ImprovedOnset,sprintf('%s_no_feedback_exact',id),~feedback,data);
 
 %Align feedback no feedback with RT
 write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+data.ImprovedRt,sprintf('%s_feedback_no_feedback_RTconvolv',id),feedback,data);
@@ -472,6 +508,13 @@ write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+1,s
 
 %% Improve Responses ACTUAL RESPONSES AS PARAMETERIC MOD
 write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+data.ImprovedRt,sprintf('%s_impRespMod',id),impResp,data);
+
+
+%write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+data.J2Onset,sprintf('%s_FR',id),feedback.*impResp,data);
+%write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+data.J2Onset,sprintf('%s_FRo',id),~feedback.*impResp,data);
+
+write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.J2Onset,sprintf('%s_FRp',id),feedback.*data.ImprovedRespBin,data);
+write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.J2Onset,sprintf('%s_FRp0',id),~feedback.*data.ImprovedRespBin,data);
 
 %% Parametric interactions
 write3Ddeconv_startTimes(reg_file_dest,data.ImprovedOnset,data.ImprovedOnset+data.ImprovedRt,sprintf('%s_feedbackXinf_no_inf',id),feedback.*inf_no_inf,data);
@@ -499,7 +542,7 @@ function [x,y]=write3Ddeconv_startTimes(file_loc,event_beg,event_end,fname,modul
 % censor: the censor vector or parametric value vector depending on the regressor
 % trial_index: the position of when a new block starts (trialwise)
 
-global gen_concat_reg
+global gen_concat_reg final_recorded_time
  
 format long
 
@@ -543,14 +586,22 @@ else
         mkdir([file_loc '/fsl_regs/'])
     end
     
+    tmp_run_data = [];
+    
     for i = 1:n_runs
-        run_data = x(i==data.Run,:);
-        nan_data = sum(isnan(run_data),2)>=1;
-        run_data(nan_data,:)=[];
-        run_data=array2table(run_data);
-        writetable(run_data,[file_loc '/fsl_regs/' fname '_run_' num2str(i) '.dat'],'Delimiter','\t','WriteVariableNames',0)
+        run_data.(['run_' num2str(i)]) = x(i==data.Run,:);
+        nan_data = sum(isnan(run_data.(['run_' num2str(i)])),2)>=1;
+        run_data.(['run_' num2str(i)])(nan_data,:)=[];
+        run_data.(['run_' num2str(i)])=array2table(run_data.(['run_' num2str(i)]));
+        if i > 1
+           run_data.(['run_' num2str(i)])(:,1).Var1 = run_data.(['run_' num2str(i)])(:,1).Var1 + final_recorded_time(i-1);
+        end
+        tmp_run_data = [tmp_run_data; run_data.(['run_' num2str(i)])];
+        %writetable(run_data,[file_loc '/fsl_regs/' fname '_run_' num2str(i) '.dat'],'Delimiter','\t','WriteVariableNames',0)
     end
 end
+
+writetable(tmp_run_data,[file_loc '/fsl_regs_helmet/' fname '.dat'],'Delimiter','\t','WriteVariableNames',0)
 
 y=0;
 

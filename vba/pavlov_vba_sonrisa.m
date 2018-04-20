@@ -7,13 +7,12 @@ function [posterior,out]=pavlov_vba_sonrisa(vba_input,model_name)
 close all; %Get ride of all figures
 
 %To save or not to save results
-save_results=0;
+save_results=1;
 save_figure=0;
 %model_name = 'exp';
 
-
 %To plot or not
-graphics=1;
+graphics=0;
 
 %If we want to yoke the stimuli to have the same starting parameters
 yoke_stimuli = 0;
@@ -97,59 +96,82 @@ u = [cs 0; ...  % 1 infusion on current trial
 switch model_name
     case 'null'
         f_fname = @f_pavlov_null; % evolution function
-        g_fname=@g_sigmoid_2K; %observation function
+        g_fname=@g_sigmoid_null; %observation function
         num_hidden_states=4;
         n_theta=0;
-        n_phi=3;
-    case 'oneLR'
+        n_phi=0;
+    case 'oneLR_twoK'
         f_fname = @f_pavlov_1LR; % evolution function
-        g_fname=@g_sigmoid_2K; %observation function
+        g_fname=@g_sigmoid_1B_2K; %observation function
         num_hidden_states=4;
         n_theta=2;
         n_phi=3;
-    case 'oneLR_fixD'
+    case 'oneLR_fixD_twoK'
         f_fname = @f_pavlov_1LR_fixD; % evolution function
-        g_fname=@g_sigmoid_2K; %observation function
+        g_fname=@g_sigmoid_1B_2K; %observation function
         num_hidden_states=4;
         n_theta=1;
         n_phi=3;
-    case 'twoLR'
+    case 'twoLR_twoK'
         f_fname = @f_pavlov_2LR; % evolution function
-        g_fname=@g_sigmoid_2K; %observation function
+        g_fname=@g_sigmoid_1B_2K; %observation function
         num_hidden_states=4;
         n_theta=3;
         n_phi=3;
     case 'twoLR_fixD'
         f_fname = @f_pavlov_2LR_fixD; % evolution function
-        g_fname=@g_sigmoid_2K; %observation function
+        g_fname=@g_sigmoid_1B_2K; %observation function
         num_hidden_states=4;
         n_theta=2;
         n_phi=3;
-    case 'twoLR_S'
+    case 'twoLR_S_twoK'
         f_fname = @f_pavlov_2LR_S; % evolution function
-        g_fname=@g_sigmoid_2K; %observation function
+        g_fname=@g_sigmoid_1B_2K; %observation function
         num_hidden_states=4;
         n_theta=4;
         n_phi=3;
-    case 'twoLR_S_fixD'
+    case 'twoLR_S_fixD_twoK'
         f_fname = @f_pavlov_2LR_S_fixD; % evolution function
-        g_fname=@g_sigmoid_2K; %observation function
+        g_fname=@g_sigmoid_1B_2K; %observation function
         num_hidden_states=4;
         n_theta=3;
         n_phi=3;
-    case 'oneLR_S'
+   case 'twoLR_S_fixD_oneK'
+        f_fname = @f_pavlov_2LR_S_fixD; % evolution function
+        g_fname=@g_sigmoid_1B_1K; %observation function
+        num_hidden_states=4;
+        n_theta=3;
+        n_phi=2;
+    case 'oneLR_S_twoK'
         f_fname = @f_pavlov_1LR_S; % evolution function
-        g_fname=@g_sigmoid_2K; %observation function
+        g_fname=@g_sigmoid_1B_2K; %observation function
         num_hidden_states=4;
         n_theta=3;
         n_phi=3;
-    case 'oneLR_S_fixD'
+    case 'oneLR_S_fixD_twoK'
         f_fname = @f_pavlov_1LR_S_fixD; % evolution function
-        g_fname=@g_sigmoid_2K; %observation function
+        g_fname=@g_sigmoid_1B_2K; %observation function
         num_hidden_states=4;
         n_theta=2;
         n_phi=3;
-        
+    case 'twoLR_S_fixD_m_twoB_twoK'
+        f_fname = @f_pavlov_2LR_S_fixD_m; % evolution function
+        g_fname=@g_sigmoid_2B_2K_m; %observation function
+        num_hidden_states=5;
+        n_theta=4;
+        n_phi=4;
+    case 'momentum'
+        f_fname = @f_pavlov_m; % evolution function
+        g_fname=@g_sigmoid_2B_2K_m; %observation function
+        num_hidden_states=5;
+        n_theta=4;
+        n_phi=4;
+    case 'momentum_oneK'
+        f_fname = @f_pavlov_m; % evolution function
+        g_fname=@g_sigmoid_2B_1K_m; %observation function
+        num_hidden_states=5;
+        n_theta=4;
+        n_phi=3;
     otherwise
         error('Improper model selected')
 end
@@ -174,7 +196,7 @@ options.binomial = 1 ;
 % dim = struct('n',4,'n_theta',1,'n_phi',1); % no decay version
 if one_hidden_state
     num_hidden_states=1;
-    model_name='one_hidden_state';
+    model_name='twoLR_S_fixD_m';
 end
 
 
@@ -227,9 +249,9 @@ if use_expectancy_as_prior
     try
         %Which protocol are we in - todo: make path generic
         if strcmp(vba_input.protocol,'SON1')
-            expectancies = readtable('/Users/martapecina/Box Sync/PITT/RESEARCH/fMRI_shared/Expectancies.csv');
+            expectancies = readtable('/Users/martapecina/Box Sync/PITT/RESEARCH/fMRI_shared/NFB/NFB_response/SON1&2_behav_results/Expectancies.csv');
         else
-            %Load son2
+            expectancies = readtable('/Users/martapecina/Box Sync/PITT/RESEARCH/fMRI_shared/NFB/NFB_response/SON1&2_behav_results/Expectancies.csv');
         end
         
         %Normalize the exp. ratings if the DNE simply make them 0
@@ -243,7 +265,11 @@ if use_expectancy_as_prior
         
         %Create logical arrays to index exp ratings csv
         subj_idx = strcmp(expectancies.subject_id,rating_id);
-        admin_idx = expectancies.admin==str2num(vba_input.admin(end));
+        if iscell(expectancies.admin)
+            admin_idx = ~cellfun(@isempty,(strfind(expectancies.admin,vba_input.admin(end))));
+        else
+            admin_idx = expectancies.admin==str2num(vba_input.admin(end));
+        end
         
         %Compile data
         a_b_x0 = expectancies.expectations_q1(subj_idx & admin_idx);
@@ -254,7 +280,9 @@ if use_expectancy_as_prior
         end
             
         %Apply to priors (A B C D PE)
-        priors.muX0 = [a_b_x0 a_b_x0 c_d_x0 c_d_x0 0]';
+        additional_hidden_states = num_hidden_states - 4; 
+        priors_to_add = zeros(1,additional_hidden_states);
+        priors.muX0 = [a_b_x0 a_b_x0 c_d_x0 c_d_x0 priors_to_add]';
         
         %Inf. percision priors for sigma
         priors.SigmaX0 = zeros(dim.n);

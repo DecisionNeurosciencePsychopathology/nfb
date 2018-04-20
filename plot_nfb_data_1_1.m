@@ -235,6 +235,7 @@ end
 group_specs.name = 'Son1 admin 1 and 2';
 group_specs.current_admin='NA';
 
+
 %--------------------------------------------------------------------------
 function fig_num=plot_one_graph_resp_per_condition(data,fig_num,subj_specs)
 conditions = unique(data.Infusion);

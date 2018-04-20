@@ -1,4 +1,4 @@
-function [gx] = g_sigmoid_1K(V_t,Phi,u_t,inG)
+function [gx] = g_sigmoid_1B_1K(V_t,Phi,u_t,inG)
 % Identity observation mapping (partially observable)
 % omega = Phi(1); %Free paramter no contraints?
 % gx = sigmoid((Vst+omega))';
